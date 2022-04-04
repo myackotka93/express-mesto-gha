@@ -19,12 +19,12 @@
   },
   "homepage": "https://github.com/myackotka93/express-mesto-gha#readme",
   "devDependencies": {
-    "eslint": "^8.11.0",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
     "nodemon": "^2.0.15"
   },
   "dependencies": {
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.25.4",
     "express": "^4.17.3",
     "mongoose": "^6.2.7"
   }
