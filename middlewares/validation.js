@@ -5,7 +5,7 @@ module.exports.idValidation = celebrate({
   params: Joi
     .object()
     .keys({
-      id: Joi.string().hex(),
+      id: Joi.string().hex().length(24),
     }),
 });
 
@@ -14,7 +14,7 @@ module.exports.cardValidation = celebrate({
     .object()
     .keys({
       name: Joi.string().required().min(2).max(30),
-      link: Joi.string().required().min(2).max(256)
+      link: Joi.string().required()
         .custom((value, helpers) => {
           if (validator.isURL(value, { require_protocol: true, disallow_auth: true })) {
             return value;
@@ -37,7 +37,7 @@ module.exports.signupValidation = celebrate({
         return helpers.message('Неправильный формат ссылки');
       }),
       email: Joi.string().required().email(),
-      password: Joi.string().required().min(8),
+      password: Joi.string().required(),
     }),
 });
 
@@ -46,7 +46,7 @@ module.exports.signinValidation = celebrate({
     .object()
     .keys({
       email: Joi.string().required().email(),
-      password: Joi.string().required().min(8),
+      password: Joi.string().required(),
     }),
 });
 
@@ -54,7 +54,7 @@ module.exports.userInfoValidation = celebrate({
   body: Joi
     .object()
     .keys({
-      name: Joi.string().min(2).max(30),
+      name: Joi.string().required().min(2).max(30),
       about: Joi.string().min(2).max(30),
     }),
 });

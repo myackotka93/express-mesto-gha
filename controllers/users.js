@@ -18,33 +18,38 @@ module.exports.getUsers = (req, res, next) => {
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.params.id)
-    .orFail(() => {
-      throw new Error('NotFound');
+    .then((data) => {
+      if (!data) {
+        throw new NotFoundError('Запрашиваемый пользователь не найден');
+      }
+      res.send(data);
     })
-    .then((data) => res.status(200).send({ data }))
     .catch((err) => {
       if (err.message === 'NotFound') {
-        throw new NotFoundError(err.message);
-      } else if (err.kind === 'ObjectId') {
-        throw new BadRequestError('Неверный id пользователя');
+        next(new NotFoundError(err.message));
+      } if (err.kind === 'ObjectId') {
+        next(new BadRequestError('Неверный id пользователя'));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 module.exports.getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(() => {
-      throw new Error('Такого пользователя не существует');
+    .then((data) => {
+      if (!data) {
+        throw new NotFoundError('Запрашиваемый пользователь не найден');
+      }
+      res.send(data);
     })
-    .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Некорректный Id');
+        next(new BadRequestError('Введены некорректные данные'));
+      } else {
+        next(err);
       }
-      throw new NotFoundError(err.message);
-    })
-    .catch(next);
+    });
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -53,7 +58,7 @@ module.exports.createUser = (req, res, next) => {
   } = req.body;
 
   if (!email || !password) {
-    throw new NotFoundError('Неверная почта или пароль');
+    throw new BadRequestError('Неверная почта или пароль');
   }
 
   bcrypt.hash(password, 10)
@@ -64,13 +69,13 @@ module.exports.createUser = (req, res, next) => {
       .status(200)
       .send({ data: { _id: user._id, email: user.email } }))
     .catch((err) => {
-      if (err.name === 'MongoError' || err.code === 11000) {
-        throw new ConflictError('Пользователь с таким email уже существует');
-      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new BadRequestError('Пароль или почта некорректны');
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new BadRequestError('Пароль или почта некорректны'));
+      } else if (err.name === 'MongoError' || err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
       }
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.updateUserInfo = (req, res, next) => {
@@ -84,17 +89,19 @@ module.exports.updateUserInfo = (req, res, next) => {
     new: true,
     runValidators: true,
   })
-    .orFail(() => {
-      throw new Error('invalidUserId');
+    .then((data) => {
+      if (!data) {
+        throw new NotFoundError('Запрашиваемый пользователь не найден');
+      }
+      res.send(data);
     })
-    .then((data) => res.status(200).send({ data }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new BadRequestError('Введенные данные некорректны');
+        next(new BadRequestError('Введены некорректные данные'));
+      } else {
+        next(err);
       }
-      throw new NotFoundError(err.message);
-    })
-    .catch(next);
+    });
 };
 
 module.exports.updateAvatar = (req, res, next) => {
@@ -111,14 +118,19 @@ module.exports.updateAvatar = (req, res, next) => {
     .orFail(() => {
       throw new Error('invalidUserId');
     })
-    .then((data) => res.status(200).send({ data }))
+    .then((data) => {
+      if (!data) {
+        throw new NotFoundError('Запрашиваемый пользователь не найден');
+      }
+      res.send(data);
+    })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new BadRequestError('Введенные данные некорректны');
+        next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      throw new NotFoundError(err.message);
-    })
-    .catch(next);
+    });
 };
 
 module.exports.login = (req, res, next) => {

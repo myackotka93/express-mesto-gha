@@ -16,9 +16,12 @@ module.exports.createCard = (req, res, next) => {
   Card.create({ name, link, owner: req.user._id })
     .then((data) => res.status(200).send({ data }))
     .catch((err) => {
-      throw new BadRequestError(err.message);
-    })
-    .catch(next);
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Введенные данные некорректны'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.deleteCard = (req, res, next) => {
@@ -27,20 +30,26 @@ module.exports.deleteCard = (req, res, next) => {
       throw new Error('invalidUserId');
     })
     .then((data) => {
-      if (data.owner._id.toString() !== req.user._id.toString()) {
+      if (data.owner.toString() !== req.user._id.toString()) {
         throw new ForbiddenError('Чужие карточки нельзя удалять');
       }
       Card.findByIdAndRemove(req.params.id)
         .then((newCard) => res.status(200).send({ data: newCard }))
         .catch((err) => {
-          throw new NotFoundError(err.message);
-        })
-        .catch(next);
+          if (err.name === 'CastError') {
+            next(new NotFoundError('Введенные данные некорректны'));
+          } else {
+            next(err);
+          }
+        });
     })
     .catch((err) => {
-      throw new NotFoundError(err.message);
-    })
-    .catch(next);
+      if (err.name === 'CastError') {
+        next(new NotFoundError('Введенные данные некорректны'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {
@@ -54,12 +63,12 @@ module.exports.likeCard = (req, res, next) => {
     })
     .then((data) => res.status(200).send({ data }))
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        throw new NotFoundError(err.message);
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      throw new BadRequestError('Переданы неверные данные при лайке карточки');
-    })
-    .catch(next);
+    });
 };
 
 module.exports.dislikeCard = (req, res, next) => {
@@ -75,10 +84,10 @@ module.exports.dislikeCard = (req, res, next) => {
       .status(200)
       .send({ data }))
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        throw new NotFoundError(err.message);
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      throw new BadRequestError('Переданы неверные данные при дизлайке карточки');
-    })
-    .catch(next);
+    });
 };

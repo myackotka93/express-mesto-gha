@@ -31,25 +31,20 @@ app.post('/signup', signupValidation, createUser);
 app.post('/signin', signinValidation, login);
 
 app.use(auth);
-app.use('/users', auth, require('./routes/users'));
-app.use('/cards', auth, require('./routes/cards'));
-
-app.use(errorLogger);
-
-app.use(errors());
+app.use('/users', require('./routes/users'));
+app.use('/cards', require('./routes/cards'));
 
 app.use(() => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
-app.use((err, req, res, next) => {
-  res.status(err.statusCode).send({ message: err.message });
-  next();
-});
+app.use(errorLogger);
+
+app.use(errors());
 
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
-  res.status(err.statusCode).send({ message: statusCode === 500 ? 'Что-то пошло не так' : message });
+  res.status(statusCode).send({ message: statusCode === 500 ? 'Что-то пошло не так' : message });
   next();
 });
 
