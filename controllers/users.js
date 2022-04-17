@@ -25,9 +25,7 @@ module.exports.getUser = (req, res, next) => {
       res.send(data);
     })
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        next(new NotFoundError(err.message));
-      } if (err.kind === 'ObjectId') {
+      if (err.name === 'CastError') {
         next(new BadRequestError('Неверный id пользователя'));
       } else {
         next(err);
@@ -115,9 +113,7 @@ module.exports.updateAvatar = (req, res, next) => {
     new: true,
     runValidators: true,
   })
-    .orFail(() => {
-      throw new Error('invalidUserId');
-    })
+    .orFail(() => new NotFoundError('Пользователь с указанным id не существует'))
     .then((data) => {
       if (!data) {
         throw new NotFoundError('Запрашиваемый пользователь не найден');

@@ -17,7 +17,7 @@ module.exports.createCard = (req, res, next) => {
     .then((data) => res.status(200).send({ data }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Введенные данные некорректны'));
+        next(new BadRequestError('Переданы некорректные данные'));
       } else {
         next(err);
       }
@@ -26,9 +26,7 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.id)
-    .orFail(() => {
-      throw new Error('invalidUserId');
-    })
+    .orFail(() => new NotFoundError('Карточка с указанным id не существует'))
     .then((data) => {
       if (data.owner.toString() !== req.user._id.toString()) {
         throw new ForbiddenError('Чужие карточки нельзя удалять');
@@ -37,7 +35,7 @@ module.exports.deleteCard = (req, res, next) => {
         .then((newCard) => res.status(200).send({ data: newCard }))
         .catch((err) => {
           if (err.name === 'CastError') {
-            next(new NotFoundError('Введенные данные некорректны'));
+            next(new BadRequestError('Переданы некорректные данные'));
           } else {
             next(err);
           }
@@ -45,7 +43,7 @@ module.exports.deleteCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new NotFoundError('Введенные данные некорректны'));
+        next(new BadRequestError('Переданы некорректные данные'));
       } else {
         next(err);
       }
@@ -58,9 +56,7 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFoundError('Карточка с указанным id не существует'))
     .then((data) => res.status(200).send({ data }))
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -77,9 +73,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFoundError('Карточка с указанным id не существует'))
     .then((data) => res
       .status(200)
       .send({ data }))
